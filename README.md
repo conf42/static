@@ -1,2 +1,3 @@
 # static
-static website elements
+
+https://conf42.github.io/static/
