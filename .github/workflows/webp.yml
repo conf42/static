@@ -1,0 +1,29 @@
+name: WebP versions of headshots and podcast covers
+# conf42.com shows <name>.webp / <name>.sm.webp (70-99% smaller than the PNGs) and falls back
+# to the PNG until these exist, so a fresh upload works right away and gets lighter a minute later.
+on:
+  push:
+    branches: [main]
+    paths: ['headshots/**.png', 'podcasts/**.png', 'make_webp.py']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: webp
+  cancel-in-progress: false
+jobs:
+  webp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install Pillow
+      - run: python make_webp.py
+      - name: Commit new WebP files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 'headshots/*.webp' 'podcasts/*.webp'
+          git diff --cached --quiet || (git commit -m "WebP versions of new headshots/podcast covers" && git push)
