@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Write WebP versions of headshots and podcast covers (conf42.com links to these).
 
-  headshots/<name>.png -> headshots/<name>.webp     500x400, ~16 KB (PNG ~50-250 KB)
-                       -> headshots/<name>.sm.webp  160 px, ~5 KB, for 44-60 px avatars
-  podcasts/<name>.png  -> podcasts/<name>.webp      800 px wide, ~30 KB (PNG ~2 MB)
+  headshots/<name>.png -> headshots/webp/<name>.webp     500x400, ~16 KB (PNG ~50-250 KB)
+                       -> headshots/webp/sm/<name>.webp  160 px, ~5 KB, for 44-60 px avatars
+  podcasts/<name>.png  -> podcasts/webp/<name>.webp      800 px wide, ~30 KB (PNG ~2 MB)
+
+The WebPs live in webp/ subfolders so headshots/ and podcasts/ list only the PNGs.
 
 Only missing or outdated WebPs are written, so re-running is cheap. Runs in CI on every
 push that touches headshots/ or podcasts/ (.github/workflows/webp.yml); conf42.com falls
@@ -16,10 +18,10 @@ from pathlib import Path
 from PIL import Image
 
 JOBS = [
-    # folder, suffix, max size, quality
-    ("headshots", ".webp", (500, 500), 80),
-    ("headshots", ".sm.webp", (160, 160), 75),
-    ("podcasts", ".webp", (800, 800), 78),
+    # folder, output folder, max size, quality
+    ("headshots", "headshots/webp", (500, 500), 80),
+    ("headshots", "headshots/webp/sm", (160, 160), 75),
+    ("podcasts", "podcasts/webp", (800, 800), 78),
 ]
 
 
@@ -34,9 +36,10 @@ def convert(src, dst, size, quality):
 
 def main():
     written = 0
-    for folder, suffix, size, quality in JOBS:
+    for folder, out, size, quality in JOBS:
+        Path(out).mkdir(parents=True, exist_ok=True)
         for src in sorted(Path(folder).glob("*.png")):
-            dst = src.with_name(src.stem + suffix)
+            dst = Path(out) / (src.stem + ".webp")
             if dst.exists() and dst.stat().st_mtime >= src.stat().st_mtime:
                 continue
             try:
