@@ -14,7 +14,7 @@ pngquant --quality=65-80 --force --ext .png headshots/*.png
 ```
 ## WebP versions (automatic)
 
-conf42.com shows `headshots/<name>.webp` (500x400), `headshots/<name>.sm.webp` (160 px avatars)
-and `podcasts/<name>.webp` (800 px) instead of the PNGs: 70-99% smaller. They're made by
+conf42.com shows `headshots/webp/<name>.webp` (500x400), `headshots/webp/sm/<name>.webp` (160 px avatars)
+and `podcasts/webp/<name>.webp` (800 px) instead of the PNGs: 70-99% smaller. They're made by
 `make_webp.py`, which the `webp` GitHub Action runs on every push that adds a PNG. Until the
 WebP exists, the site falls back to the PNG, so uploading works exactly as before.
