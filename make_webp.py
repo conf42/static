@@ -11,8 +11,13 @@ Only missing or outdated WebPs are written, so re-running is cheap. Runs in CI o
 push that touches headshots/ or podcasts/ (.github/workflows/webp.yml); conf42.com falls
 back to the PNG (onerror) until the WebP exists.
 
-    pip install Pillow && python3 make_webp.py
+PNGs given as arguments are always rewritten: a CI checkout gives every file the same
+mtime, so a REPLACED headshot looks up to date there and would keep its old WebP. The
+workflow passes the PNGs changed by the push.
+
+    pip install Pillow && python3 make_webp.py [headshots/<name>.png ...]
 """
+import sys
 from pathlib import Path
 
 from PIL import Image
@@ -35,12 +40,13 @@ def convert(src, dst, size, quality):
 
 
 def main():
+    force = {Path(a).as_posix() for a in sys.argv[1:]}
     written = 0
     for folder, out, size, quality in JOBS:
         Path(out).mkdir(parents=True, exist_ok=True)
         for src in sorted(Path(folder).glob("*.png")):
             dst = Path(out) / (src.stem + ".webp")
-            if dst.exists() and dst.stat().st_mtime >= src.stat().st_mtime:
+            if src.as_posix() not in force and dst.exists() and dst.stat().st_mtime >= src.stat().st_mtime:
                 continue
             try:
                 convert(src, dst, size, quality)

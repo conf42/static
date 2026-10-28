@@ -16,11 +16,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: pip install Pillow
-      - run: python make_webp.py
+      # PNGs changed by this push (replaced headshots included) are always re-encoded
+      - name: Write WebP files
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          changed=()
+          if [ -n "$BEFORE" ] && git cat-file -e "$BEFORE" 2>/dev/null; then
+            while IFS= read -r f; do changed+=("$f"); done < <(git -c core.quotepath=off diff --name-only --diff-filter=AM "$BEFORE" HEAD -- 'headshots/*.png' 'podcasts/*.png')
+          fi
+          python make_webp.py "${changed[@]}"
       - name: Commit new WebP files
         run: |
           git config user.name "github-actions[bot]"
